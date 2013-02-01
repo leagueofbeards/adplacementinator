@@ -12,6 +12,7 @@ class AdPlacementInator extends Plugin
 
 	public function action_plugin_activation( $plugin_file ) {
 		Post::add_new_type( 'ad' );
+		Post::add_new_type( 'vendor' );		
 		$this->create_ads_table();
 		$this->create_users_ads_table();
 		$this->create_ad_analytics_table();
