@@ -37,7 +37,43 @@ class AdPlacementInator extends Plugin
 		}
 		return $type;
 	}
+
+	public function filter_posts_get_paramarray($paramarray) {
+		$queried_types = Posts::extract_param($paramarray, 'content_type');
+		if($queried_types && in_array('ad', $queried_types)) {
+			$paramarray['post_join'][] = '{ads}';
+			$default_fields = isset($paramarray['default_fields']) ? $paramarray['default_fields'] : array();
+			$default_fields['{ads}.location_id'] = 0;
+			$default_fields['{ads}.active'] = '';
+			$default_fields['{ads}.date'] = '';
+			$default_fields['{ads}.link'] = '';
+			$default_fields['{ads}.image_url'] = '';
+			$paramarray['default_fields'] = $default_fields;
+		}
+		
+		return $paramarray;
+	}
 	
+	public function filter_post_get($out, $name, $event) {
+		if('event' == Post::type_name($event->get_raw_field('content_type'))) {
+			switch($name) {
+				case 'location' :
+					$out = Location::get( array('id' => $event->location_id) );
+				break;
+			}
+		}
+		
+		return $out;
+	}
+	
+	public function filter_post_schema_map_event($schema, $post) {
+		$schema['events'] = $schema['*'];
+		// Store the id of the post in the post_id field of the invoices table
+		$schema['events']['post_id'] = '*id';
+		return $schema;
+	}
+
+
 	private function create_ads_table() {
 		$sql = "CREATE TABLE {\$prefix}ads (
 			id int unsigned NOT NULL AUTO_INCREMENT,
