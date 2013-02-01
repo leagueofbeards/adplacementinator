@@ -4,6 +4,10 @@ class AdPlacementInator extends Plugin
 {
 	public function action_init() {
 		DB::register_table('ads');
+		DB::register_table('ad_analytics');
+		DB::register_table('user_ads');
+		DB::register_table('ad_vendors');
+		DB::register_table('ad_plans');
 	}
 
 	public function action_plugin_activation( $plugin_file ) {
@@ -11,6 +15,8 @@ class AdPlacementInator extends Plugin
 		$this->create_ads_table();
 		$this->create_users_ads_table();
 		$this->create_ad_analytics_table();
+		$this->create_ad_vendors_table();
+		$this->create_ad_plans_table();
 	}
 	
 	public function action_plugin_deactivation ( $file='' ) {
@@ -62,13 +68,43 @@ class AdPlacementInator extends Plugin
 	}
 
 	private function create_users_ads_table() {
-		$sql = "CREATE TABLE {\$prefix}users_ads (
+		$sql = "CREATE TABLE {\$prefix}ad_users (
 			id int unsigned NOT NULL AUTO_INCREMENT,
 			ad_id int unsigned NOT NULL,
 			user_id int unsigned NOT NULL,
 			date varchar(255) NULL,
 			clicked int unsigned NOT NULL,
 			PRIMARY KEY (`id`)
+			) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;";
+
+		DB::dbdelta( $sql );
+	}
+
+	private function create_ad_vendors_table() {
+		$sql = "CREATE TABLE {\$prefix}ad_vendors (
+			id int unsigned NOT NULL AUTO_INCREMENT,
+			post_id int unsigned NOT NULL,
+			name varchar(255) NULL,
+			contact_name varchar(255) NULL,
+			contact_email varchar(255) NULL,
+			status int unsigned NOT NULL,
+			plan_id int unsigned NOT NULL,
+			PRIMARY KEY (`id`),
+			UNIQUE KEY `post_id` (`post_id`)			
+			) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;";
+
+		DB::dbdelta( $sql );
+	}
+
+	private function create_ad_plans_table() {
+		$sql = "CREATE TABLE {\$prefix}ad_plans (
+			id int unsigned NOT NULL AUTO_INCREMENT,
+			post_id int unsigned NOT NULL,
+			units int unsigned NOT NULL,
+			remote_id varchar(255) NULL,
+			active int unsigned NOT NULL,
+			PRIMARY KEY (`id`),
+			UNIQUE KEY `post_id` (`post_id`)			
 			) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;";
 
 		DB::dbdelta( $sql );
