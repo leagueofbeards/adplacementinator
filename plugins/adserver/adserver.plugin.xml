@@ -8,6 +8,8 @@
 	<version>1.0</version>
 	<url>http://leagueofbeards.com/</url>
 	<description><![CDATA[Simple Adserver.]]></description>
-
-	<copyright>2013</copyright>	
+	<copyright>2013</copyright>		
+	<provides>
+		<feature>Ads</feature>
+	</provides>
 </pluggable>

@@ -6,17 +6,14 @@ class AdPlacementInator extends Plugin
 		DB::register_table('ads');
 		DB::register_table('ad_analytics');
 		DB::register_table('user_ads');
-		DB::register_table('ad_vendors');
 		DB::register_table('ad_plans');
 	}
 
 	public function action_plugin_activation( $plugin_file ) {
 		Post::add_new_type( 'ad' );
-		Post::add_new_type( 'vendor' );		
 		$this->create_ads_table();
 		$this->create_users_ads_table();
 		$this->create_ad_analytics_table();
-		$this->create_ad_vendors_table();
 		$this->create_ad_plans_table();
 	}
 	
@@ -37,42 +34,15 @@ class AdPlacementInator extends Plugin
 		}
 		return $type;
 	}
-
-	public function filter_posts_get_paramarray($paramarray) {
-		$queried_types = Posts::extract_param($paramarray, 'content_type');
-		if($queried_types && in_array('ad', $queried_types)) {
-			$paramarray['post_join'][] = '{ads}';
-			$default_fields = isset($paramarray['default_fields']) ? $paramarray['default_fields'] : array();
-			$default_fields['{ads}.location_id'] = 0;
-			$default_fields['{ads}.active'] = '';
-			$default_fields['{ads}.date'] = '';
-			$default_fields['{ads}.link'] = '';
-			$default_fields['{ads}.image_url'] = '';
-			$paramarray['default_fields'] = $default_fields;
-		}
-		
-		return $paramarray;
-	}
 	
-	public function filter_post_get($out, $name, $event) {
-		if('event' == Post::type_name($event->get_raw_field('content_type'))) {
+	public function filter_post_get($out, $name, $ad) {
+		if('ad' == Post::type_name($ad->get_raw_field('content_type'))) {
 			switch($name) {
-				case 'location' :
-					$out = Location::get( array('id' => $event->location_id) );
-				break;
 			}
 		}
 		
 		return $out;
 	}
-	
-	public function filter_post_schema_map_event($schema, $post) {
-		$schema['events'] = $schema['*'];
-		// Store the id of the post in the post_id field of the invoices table
-		$schema['events']['post_id'] = '*id';
-		return $schema;
-	}
-
 
 	private function create_ads_table() {
 		$sql = "CREATE TABLE {\$prefix}ads (
@@ -112,22 +82,6 @@ class AdPlacementInator extends Plugin
 			date varchar(255) NULL,
 			clicked int unsigned NOT NULL,
 			PRIMARY KEY (`id`)
-			) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;";
-
-		DB::dbdelta( $sql );
-	}
-
-	private function create_ad_vendors_table() {
-		$sql = "CREATE TABLE {\$prefix}ad_vendors (
-			id int unsigned NOT NULL AUTO_INCREMENT,
-			post_id int unsigned NOT NULL,
-			name varchar(255) NULL,
-			contact_name varchar(255) NULL,
-			contact_email varchar(255) NULL,
-			status int unsigned NOT NULL,
-			plan_id int unsigned NOT NULL,
-			PRIMARY KEY (`id`),
-			UNIQUE KEY `post_id` (`post_id`)			
 			) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;";
 
 		DB::dbdelta( $sql );
