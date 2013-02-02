@@ -7,6 +7,7 @@ class AdPlacementInator extends Plugin
 		DB::register_table('ad_analytics');
 		DB::register_table('user_ads');
 		DB::register_table('ad_plans');
+		$this->ad_pages();
 	}
 
 	public function action_plugin_activation( $plugin_file ) {
@@ -99,6 +100,20 @@ class AdPlacementInator extends Plugin
 			) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;";
 
 		DB::dbdelta( $sql );
+	}
+
+	private function ad_pages() {
+		$this->add_template('ads', dirname($this->get_file()) . '/admin/ads.php');
+	}
+
+	public function filter_admin_access_tokens( array $require_any, $page ) {
+		switch ($page) {
+			case 'ads' :
+				$require_any = array('post_entry' => true);
+			break;			
+		}
+		
+		return $require_any;
 	}
 
 	public function filter_posts_get_paramarray($paramarray) {
