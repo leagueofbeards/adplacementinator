@@ -57,8 +57,10 @@
 		<label for="title">Ad Type:</label>
 		<select name="size" id="size" class="chzn-select" data-placeholder="Choose an Ad Type">
 			<option></option>
-			<option value="970.90">Super Wide Leaderboard</option>
-			<option value="728.90">Leaderboard</option>
+			<?php foreach( AdPlacementInator::sizes() as $key => $value ) { ?>
+				<?php if( $value == $ad->size ) { $selected = 'selected'; } else { $selected = ''; } ?>
+				<option value="<?php echo $value; ?>" <?php echo $selected; ?>><?php echo $key; ?></option>
+			<?php } ?>
 		</select>
 	</div>
 	

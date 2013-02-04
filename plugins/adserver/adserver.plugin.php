@@ -1,11 +1,12 @@
 <?php
 namespace Habari;
+
 class AdPlacementInator extends Plugin
 {
 	public function action_init() {
 		DB::register_table('ads');
 		DB::register_table('ad_analytics');
-		DB::register_table('user_ads');
+		DB::register_table('ad_users');
 		DB::register_table('ad_plans');
 		$this->ad_pages();
 	}
@@ -88,6 +89,7 @@ class AdPlacementInator extends Plugin
 			date varchar(255) NULL,
 			vendor int unsigned NOT NULL,
 			clicked int unsigned NOT NULL,
+			ip varchar(45) NULL,
 			PRIMARY KEY (`id`)
 			) DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;";
 
@@ -113,29 +115,35 @@ class AdPlacementInator extends Plugin
 		$this->add_template('add_ad', dirname($this->get_file()) . '/admin/add_ad.php');
 	}
 
-	private function record_analytics($args) {
+	private function record_analytics($args, $vars) {
 		$check = DB::query("SELECT id FROM {ad_analytics} WHERE ad_id = ?", array($args['ad_id']) );
 		if( $check == true ) {
 			DB::update( DB::table('ad_analytics'), $args, array('ad_id' => $args['ad_id']) );
 		} else {
 			DB::insert( DB::table('ad_analytics'), $args );
 		}
+		
+		DB::insert( DB::table('ad_users'), $vars );
 	}
 
 	private function increment_clicks($ad) {
+		$user = User::identify();
 		$clicks = $ad->clicks + 1;
 		$views = $ad->views;
-		$args = array('ad_id' => $ad->id, 'impressions' => $views, 'clicks' => $clicks);
-		$this->record_analytics( $args );
+		$vars = array( 'ad_id' => $ad->id, 'user_id' => $user->id, 'clicked' => 1, 'date' => DateTime::date_create( date(DATE_RFC822) ), 'ip' => Utils::get_ip());
+		$args = array( 'ad_id' => $ad->id, 'impressions' => $views, 'clicks' => $clicks );
+		$this->record_analytics( $args, $vars );
 		$ad->clicks = $clicks;
 		$ad->update();
 	}
 
 	private function increment_views($ad) {
+		$user = User::identify();
 		$views = $ad->views + 1;
 		$clicks = $ad->clicks;
+		$vars = array( 'ad_id' => $ad->id, 'user_id' => $user->id, 'clicked' => 0, 'date' => DateTime::date_create( date(DATE_RFC822) ), 'ip' => Utils::get_ip());
 		$args = array('ad_id' => $ad->id, 'impressions' => $views, 'clicks' => $clicks);
-		$this->record_analytics( $args );
+		$this->record_analytics( $args, $vars );
 		$n_ad = Ad::get( array('id' => $ad->id) );
 		$n_ad->views = $views;
 		$n_ad->update();
@@ -185,8 +193,12 @@ class AdPlacementInator extends Plugin
         return $rules;
     }
 
+    public static function sizes() {
+	    return array('Super Wide Leaderboard' => '970.90', 'Leaderboard' => '728.90');
+    }
+
     public static function random_ad() {
-    	$ad = Ad::get( array('orderby' => 'RAND()'));
+    	$ad = Ad::get( array('active' => 1, 'orderby' => 'RAND()'));
     	return $ad;
     }
     
